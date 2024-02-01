@@ -1,0 +1,11 @@
+﻿namespace LinkShortener.API.Infrastructure
+{
+    public class LinkContext(DbContextOptions<LinkContext> options) : DbContext(options)
+    {
+        public DbSet<Link> Links { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+        }
+    }
+}
