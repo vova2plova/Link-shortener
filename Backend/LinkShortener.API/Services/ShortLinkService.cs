@@ -12,14 +12,14 @@ namespace LinkShortener.API.Services
             var number = random.Next();
 
             var suffix = hashids.Encode(number);
-
             try
             {
 
-                var existingLink = await context.Links.FirstOrDefaultAsync(l => l.Suffix == suffix);
+                var existingLink = await context.Links
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(l => l.Suffix == suffix);
                 if (existingLink != null)
                 {
-                    logger.LogDebug($"Suffix already exist - {suffix}");
                     return await CreateShortLink(fullLink);
                 }
             }catch (Exception ex)

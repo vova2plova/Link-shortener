@@ -1,10 +1,13 @@
 ﻿namespace LinkShortener.API.Model
 {
-	public class Link
+	public class Link : ISoftDelete
 	{
 		public Guid Id { get; set; }
 		public required string Suffix { get; set; }
 		public required string FullLink { get; set; }
-		public DateTime ExpirationDate { get; set; }
-	}
+		public DateTimeOffset ExpirationDate { get; set; }
+
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
+    }
 }

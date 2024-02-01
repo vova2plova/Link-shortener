@@ -1,4 +1,6 @@
-﻿namespace LinkShortener.API.Infrastructure
+﻿using LinkShortener.API.Infrastructure.EntityConfigurations;
+
+namespace LinkShortener.API.Infrastructure
 {
     public class LinkContext(DbContextOptions<LinkContext> options) : DbContext(options)
     {
@@ -6,6 +8,9 @@
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfiguration(new LinkTypeConfiguration());
+            modelBuilder.Entity<Link>()
+                .HasQueryFilter(x => x.IsDeleted == false);
         }
     }
 }

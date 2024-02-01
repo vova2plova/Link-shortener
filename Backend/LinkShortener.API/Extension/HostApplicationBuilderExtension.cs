@@ -1,4 +1,6 @@
-﻿namespace LinkShortener.API.Extension
+﻿using LinkShortener.API.Interceptors;
+
+namespace LinkShortener.API.Extension
 {
     public static class HostApplicationBuilderExtension
     {
@@ -9,11 +11,12 @@
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<LinkContext>(options =>
             {
-                options.UseInMemoryDatabase("LinkDb");
+                options
+                .UseInMemoryDatabase("TestLinkDb")
+                .AddInterceptors(new SoftDeleteInterceptor());
             });
 
             builder.Services.AddScoped<IShortLinkService, ShortLinkService>();
-
         }
     }
 }
