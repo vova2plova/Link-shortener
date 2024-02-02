@@ -1,11 +1,14 @@
-﻿namespace LinkShortener.API.Controllers
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace LinkShortener.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]
     public class AdminController(ILogger<AdminController> logger, LinkContext context) : Controller
     {
+        //TODO: Пагинация, Фильтрация, Сортировка
         [HttpGet("Links")]
-        public async Task<List<Link>> GetLinks([FromBody]string secretkey)
+        public async Task<List<Link>?> GetLinks([FromBody]string secretkey)
         {
             try
             {
@@ -18,8 +21,8 @@
             }
             catch (Exception ex)
             {
-                logger.LogError("Error while getiing links");
-                throw new InternalServerException("An error occurred while getting from the database. Please check the database connection and try again", ex);
+                logger.LogError($"An error occurred while getting from the database. Please check the database connection and try again\n ex - {ex}");
+                return null;
             }
         }
 
@@ -28,28 +31,28 @@
         {
             try
             {
-                var existingLink = await context
+                var softDeletedLink = await context
                     .Links
                     .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(l => l.Id == id);
-                if (existingLink == null)
+                if (softDeletedLink == null)
                 {
                     logger.LogError($"Link with id = {id} doesn't exist");
                     return NotFound($"Link with id = {id} Not found");
                 }
-                if (existingLink.IsDeleted == false)
+                if (softDeletedLink.IsDeleted == false)
                 {
                     logger.LogError($"Link with id = {id} isn't deleted");
                     return BadRequest($"Link with id = {id} isn't deleted");
                 }
 
-                existingLink.Undo();
+                softDeletedLink.Undo();
                 await context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
                 logger.LogError("Error while restoring link");
-                throw new InternalServerException("An error occurred while getting from the database. Please check the database connection and try again", ex);
+                return StatusCode(500, $"An error occurred while getting from the database. Please check the database connection and try again\n ex - {ex}");
             }
             return Ok($"Restored link id = {id}");
         }
@@ -83,8 +86,8 @@
             }
             catch (Exception ex)
             {
-                logger.LogError("Error while deleting link");
-                throw new InternalServerException("An error occurred while getting from the database. Please check the database connection and try again", ex);
+                logger.LogError($"Error while deleting link\n ex-{ex}");
+                return StatusCode(500, $"An error occurred while getting from the database. Please check the database connection and try again");
             }
 
             return Ok($"Deleted link id = {id}");
