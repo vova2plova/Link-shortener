@@ -14,18 +14,18 @@ namespace LinkShortener.API.Services
             var suffix = hashids.Encode(number);
             try
             {
-
-                var existingLink = await context.Links
+                //если суффикс уже существует и не "протух", генерируем новый
+                var existingSuffix = await context.Links
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(l => l.Suffix == suffix);
-                if (existingLink != null)
+                    .FirstOrDefaultAsync(l => suffix.Equals(l.Suffix) && l.ExpirationDate > DateTimeOffset.Now);
+                if (existingSuffix != null)
                 {
                     return await CreateShortLink(fullLink);
                 }
             }catch (Exception ex)
             {
                 logger.LogError("Error while finding suffix in db");
-                throw new InternalServerException("Internal server error", ex);
+                throw new InternalServerException("An error occurred while searching for the suffix in the database. Please check the database connection and try again", ex);
             }
 
             return suffix;

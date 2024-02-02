@@ -6,45 +6,32 @@ namespace LinkShortener.API.Controllers
 	[Route("[Controller]")]
 	public class ShortLinkController(LinkContext context, ILogger<ShortLinkController> logger, IShortLinkService shortLinkService) : Controller
 	{
-		private const string defaultTimeToLiveUnit = "DAYS";
-		private const int defaultTimeToLive = 1;
-
 		[HttpPost]
 		public async Task<IActionResult> CreateShortLink(
 			[FromBody] string fullLink,
-			[FromBody] string? timeToLiveUnit,
-			[FromBody] int? timeToLive)
+			string timeToLiveUnit = "DAYS",
+			int timeToLive = 1)
 		{
 			if (string.IsNullOrWhiteSpace(fullLink))
 			{
 				return BadRequest("Full link is required");
 			}
 
-            TimeSpan? duration;
-
-            if (string.IsNullOrWhiteSpace(timeToLiveUnit))
-			{
-				timeToLiveUnit = defaultTimeToLiveUnit;
-			}
-
-			if (timeToLive == null)
-			{
-				timeToLive = defaultTimeToLive;
-			}
+            TimeSpan duration;
 
 			switch (timeToLiveUnit)
 			{
 				case "SECONDS": 
-					duration = new TimeSpan(0, 0, 0, defaultTimeToLive); 
+					duration = TimeSpan.FromSeconds(timeToLive); 
 					break;
 				case "MINUTES":
-					duration = new TimeSpan(0, 0, defaultTimeToLive);
+					duration = TimeSpan.FromMinutes(timeToLive);
 					break;
 				case "HOURS":
-					duration = new TimeSpan(0, defaultTimeToLive, 0);
+					duration = TimeSpan.FromHours(timeToLive);
 					break;
 				case "DAYS":
-					duration = new TimeSpan(defaultTimeToLive, 0, 0);
+					duration = TimeSpan.FromDays(timeToLive);
 					break;
 				default:
 					return BadRequest("Time unit doesn't exist, use one of the approved (SECONDS | MINUTES | HOURS | DAYS)");
@@ -52,11 +39,25 @@ namespace LinkShortener.API.Controllers
 
 			try
 			{
-				var existingFullLink = await context.Links
+				var existingFullLink = await context
+					.Links
 					.AsNoTracking()
+					.IgnoreQueryFilters()
 					.FirstOrDefaultAsync(context => fullLink.Equals(context.FullLink));
 				if (existingFullLink != null)
 				{
+					//Если срок жизни ссылки истёк
+					if (existingFullLink.ExpirationDate < DateTimeOffset.Now)
+					{
+						existingFullLink.ExpirationDate = DateTimeOffset.Now.Add(duration);
+						await context.SaveChangesAsync();
+                    }
+					//Если ссылка была удалена
+					if (existingFullLink.IsDeleted)
+					{
+						existingFullLink.IsDeleted = false;
+                        await context.SaveChangesAsync();
+                    }
 					return Ok(existingFullLink.Suffix);
 				}
 
@@ -67,6 +68,19 @@ namespace LinkShortener.API.Controllers
 					FullLink = fullLink,
 					ExpirationDate = DateTimeOffset.Now.Add(duration)
 				};
+
+				//Удалить протухшую или помеченную на удаление ссылку с таким же суффиксом
+				var existingSuffix = await context
+					.Links
+					.IgnoreQueryFilters()
+					.FirstOrDefaultAsync(l => link.Suffix.Equals(l.Suffix));
+
+                if (existingSuffix != null)
+				{
+					context
+						.Links
+						.Remove(existingSuffix);
+				}
 
 				await context.Links.AddAsync(link);
 				await context.SaveChangesAsync();

@@ -1,5 +1,4 @@
-﻿using LinkShortener.API.Interceptors;
-
+﻿
 namespace LinkShortener.API.Extension
 {
     public static class HostApplicationBuilderExtension
@@ -12,11 +11,11 @@ namespace LinkShortener.API.Extension
             builder.Services.AddDbContext<LinkContext>(options =>
             {
                 options
-                .UseInMemoryDatabase("TestLinkDb")
-                .AddInterceptors(new SoftDeleteInterceptor());
+                .UseInMemoryDatabase("TestLinkDb");
             });
 
             builder.Services.AddScoped<IShortLinkService, ShortLinkService>();
+
         }
     }
 }

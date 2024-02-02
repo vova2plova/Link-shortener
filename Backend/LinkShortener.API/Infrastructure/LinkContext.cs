@@ -10,7 +10,7 @@ namespace LinkShortener.API.Infrastructure
         {
             modelBuilder.ApplyConfiguration(new LinkTypeConfiguration());
             modelBuilder.Entity<Link>()
-                .HasQueryFilter(x => x.IsDeleted == false);
+                .HasQueryFilter(l => l.IsDeleted == false);
         }
     }
 }
