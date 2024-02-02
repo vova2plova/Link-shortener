@@ -5,15 +5,16 @@
     public class AdminController(ILogger<AdminController> logger, LinkContext context) : Controller
     {
         [HttpGet("Links")]
-        public async Task<List<Link>> GetLinks([FromBody]string secretkey, Dictionary<string, string>? filter = null, string? sort = null)
+        public async Task<List<Link>> GetLinks([FromBody]string secretkey)
         {
             try
             {
                 return await context
-                    .Links
-                    .AsNoTracking()
-                    .IgnoreQueryFilters()
-                    .ToListAsync();
+                .Links
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .ToListAsync();
+                
             }
             catch (Exception ex)
             {
@@ -27,10 +28,13 @@
         {
             try
             {
-                var existingLink = await context.Links.IgnoreQueryFilters().FirstOrDefaultAsync(l => l.Id == id);
+                var existingLink = await context
+                    .Links
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(l => l.Id == id);
                 if (existingLink == null)
                 {
-                    logger.LogError($"link with id = {id} doesn't exist");
+                    logger.LogError($"Link with id = {id} doesn't exist");
                     return NotFound($"Link with id = {id} Not found");
                 }
                 if (existingLink.IsDeleted == false)
@@ -55,7 +59,10 @@
         {
             try
             {
-                var existingLink = await context.Links.IgnoreQueryFilters().FirstOrDefaultAsync(l => l.Id == id);
+                var existingLink = await context
+                    .Links
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(l => l.Id == id);
                 if (existingLink == null)
                 {
                     logger.LogError($"link with id = {id} doesn't exist");
