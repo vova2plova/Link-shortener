@@ -15,7 +15,6 @@ namespace LinkShortener.API.Extension
             });
 
             builder.Services.AddScoped<IShortLinkService, ShortLinkService>();
-
         }
     }
 }

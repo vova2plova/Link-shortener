@@ -4,10 +4,10 @@
     {
         public InternalServerException() { }
 
-        public InternalServerException(string message) 
+        public InternalServerException(string message)
             : base(message) { }
 
-        public InternalServerException(string message, Exception innerException) 
+        public InternalServerException(string message, Exception innerException)
             : base(message, innerException) { }
     }
 }

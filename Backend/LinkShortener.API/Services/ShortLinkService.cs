@@ -22,7 +22,8 @@ namespace LinkShortener.API.Services
                 {
                     return await CreateShortLink(fullLink);
                 }
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 logger.LogError("Error while finding suffix in db");
                 throw new InternalServerException("An error occurred while searching for the suffix in the database. Please check the database connection and try again", ex);
