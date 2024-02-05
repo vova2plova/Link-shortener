@@ -1,0 +1,39 @@
+﻿.container {
+    width: 60vw;
+    height: 100vh;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.text{
+    font-size: 16px;
+}
+
+
+.linkAlert{
+    display:flex;
+    border-color: aqua;
+    font-size: 24px;
+    line-height: 24px;
+    margin: 8px 0px 0px 0px
+}
+
+.btnTransparent {
+    border: solid;
+    border-width: 0.5px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.btnTransparent:hover {
+    border: solid;
+    background-color: ButtonHighlight;
+    border-width: 0.5px;
+    border-color: lightblue;
+}

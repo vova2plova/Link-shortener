@@ -27,7 +27,7 @@
                 .FirstOrDefaultAsync(context => fullLink.Equals(context.FullLink), cancellationToken);
                 if (existingFullLink != null)
                 {
-                    return Ok(existingFullLink.Suffix);
+                    return Ok($"{_baseGoUrl}/{existingFullLink.Suffix}");
                 }
 
             var link = new Link

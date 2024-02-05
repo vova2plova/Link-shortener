@@ -40,6 +40,8 @@ app.UseExceptionHandler(exception =>
     });
 });
 
+
+app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapControllers();
