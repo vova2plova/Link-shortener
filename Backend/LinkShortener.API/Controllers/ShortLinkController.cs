@@ -2,93 +2,44 @@
 {
     [ApiController]
     [Route("[Controller]")]
-    public class ShortLinkController(LinkContext context, ILogger<ShortLinkController> logger, IShortLinkService shortLinkService) : Controller
+    public class ShortLinkController(
+        IDbContextFactory<LinkContext> contextFactory,
+        IShortLinkService shortLinkService,
+        IConfiguration configuration) : Controller
     {
         [HttpPost]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesErrorResponseType(typeof(ErrorDto))]
         public async Task<IActionResult> CreateShortLink(
             [FromBody] string fullLink,
-            string timeToLiveUnit = "DAYS",
-            int timeToLive = 1)
+            CancellationToken cancellationToken)
         {
+            var _baseGoUrl = configuration.GetValue<string>("baseGoControllerUrl");
+            using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
             if (string.IsNullOrWhiteSpace(fullLink))
             {
                 return BadRequest("Full link is required");
             }
 
-            TimeSpan duration;
-
-            switch (timeToLiveUnit)
-            {
-                case "SECONDS":
-                    duration = TimeSpan.FromSeconds(timeToLive);
-                    break;
-                case "MINUTES":
-                    duration = TimeSpan.FromMinutes(timeToLive);
-                    break;
-                case "HOURS":
-                    duration = TimeSpan.FromHours(timeToLive);
-                    break;
-                case "DAYS":
-                    duration = TimeSpan.FromDays(timeToLive);
-                    break;
-                default:
-                    return BadRequest("Time unit doesn't exist, use one of the approved (SECONDS | MINUTES | HOURS | DAYS)");
-            }
-
-            try
-            {
-                var existingFullLink = await context
-                    .Links
-                    .AsNoTracking()
-                    .IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(context => fullLink.Equals(context.FullLink));
+            var existingFullLink = await context
+                .Links
+                .AsNoTracking()
+                .FirstOrDefaultAsync(context => fullLink.Equals(context.FullLink), cancellationToken);
                 if (existingFullLink != null)
                 {
-                    //Если срок жизни ссылки истёк
-                    if (existingFullLink.ExpirationDate < DateTimeOffset.Now)
-                    {
-                        existingFullLink.ExpirationDate = DateTimeOffset.Now.Add(duration);
-                        await context.SaveChangesAsync();
-                    }
-                    //Если ссылка была удалена
-                    if (existingFullLink.IsDeleted)
-                    {
-                        existingFullLink.IsDeleted = false;
-                        await context.SaveChangesAsync();
-                    }
                     return Ok(existingFullLink.Suffix);
                 }
 
-                var link = new Link
-                {
-                    Id = default,
-                    Suffix = await shortLinkService.CreateShortLink(fullLink),
-                    FullLink = fullLink,
-                    ExpirationDate = DateTimeOffset.Now.Add(duration)
-                };
-
-                //Удалить протухшую или помеченную на удаление ссылку с таким же суффиксом
-                var existingSuffix = await context
-                    .Links
-                    .IgnoreQueryFilters()
-                    .FirstOrDefaultAsync(l => link.Suffix.Equals(l.Suffix));
-
-                if (existingSuffix != null)
-                {
-                    context
-                        .Links
-                        .Remove(existingSuffix);
-                }
-
-                await context.Links.AddAsync(link);
-                await context.SaveChangesAsync();
-                return Ok(link.Suffix);
-            }
-            catch (Exception ex)
+            var link = new Link
             {
-                logger.LogError(ex, "Error saving short link to db");
-                return StatusCode(500, "Internal server error");
-            }
+                Id = default,
+                Suffix = await shortLinkService.CreateShortLink(fullLink),
+                FullLink = fullLink,
+            };
+
+            await context.Links.AddAsync(link, cancellationToken);
+            await context.SaveChangesAsync(cancellationToken);
+            return Ok($"{_baseGoUrl}/{link.Suffix}");
         }
     }
 }

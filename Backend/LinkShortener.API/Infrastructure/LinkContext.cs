@@ -9,8 +9,6 @@ namespace LinkShortener.API.Infrastructure
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new LinkTypeConfiguration());
-            modelBuilder.Entity<Link>()
-                .HasQueryFilter(l => l.IsDeleted == false);
         }
     }
 }

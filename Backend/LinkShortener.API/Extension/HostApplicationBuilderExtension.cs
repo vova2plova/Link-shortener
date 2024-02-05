@@ -8,7 +8,7 @@ namespace LinkShortener.API.Extension
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<LinkContext>(options =>
+            builder.Services.AddDbContextFactory<LinkContext>(options =>
             {
                 options
                 .UseInMemoryDatabase("TestLinkDb");
